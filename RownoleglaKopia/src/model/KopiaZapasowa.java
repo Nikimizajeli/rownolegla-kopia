@@ -1,7 +1,11 @@
 package model;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.zip.*;
 
 public class KopiaZapasowa {
@@ -12,32 +16,27 @@ public class KopiaZapasowa {
     }
 
     public void utworzKopiePracownikow(String nazwaPliku, boolean kompresjaGzip) {
-        if (kompresjaGzip) {
-            utworzKopiePracownikowGzip(nazwaPliku);
-        } else {
-            utworzKopiePracownikowZip(nazwaPliku);
-        }
-    }
+        var executorService = Executors.newFixedThreadPool(10);
+        ArrayList<CompletableFuture<Void>> results = new ArrayList<>();
 
-    private void utworzKopiePracownikowGzip(String nazwaPliku) {
-        try (ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(nazwaPliku))))) {
-            out.writeObject(baza.getPracownicy());
-        } catch (IOException ex) {
-            ex.printStackTrace();
+        for (Pracownik pracownik :
+                baza.getPracownicy().values()) {
+            results.add(CompletableFuture.runAsync(new ZapisPracownika(pracownik, nazwaPliku, kompresjaGzip), executorService));
         }
-    }
 
-    private void utworzKopiePracownikowZip(String nazwaPliku) {
-        try (FileOutputStream fos = new FileOutputStream(nazwaPliku);
-             BufferedOutputStream bos = new BufferedOutputStream(fos);
-             ZipOutputStream zos = new ZipOutputStream(bos)) {
-            zos.putNextEntry(new ZipEntry("Baza pracownikow"));
-            ObjectOutputStream out = new ObjectOutputStream(zos);
-            out.writeObject(baza.getPracownicy());
-            out.close();
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        for (var result :
+                results) {
+            try {
+                result.get();
+            } catch (ExecutionException e) {
+                System.err.println("Cos poszlo nie tak" + e.getCause());
+            } catch (InterruptedException e) {
+                System.err.println("Watek zostal przerwany");
+            }
         }
+
+        executorService.shutdown();
+
     }
 
     public HashMap<String, Pracownik> odwtorzBazePracownikow(String nazwaPliku, boolean kompresjaGzip) {
@@ -94,6 +93,57 @@ public class KopiaZapasowa {
 
             return obj;
         } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+
+class ZapisPracownika implements Runnable {
+
+    private final Pracownik pracownik;
+    private String nazwaPliku;
+    private boolean kompresjaGzip;
+
+    public ZapisPracownika(Pracownik pracownik, String nazwaPliku, boolean kompresjaGzip) {
+        this.pracownik = pracownik;
+        this.nazwaPliku = nazwaPliku;
+        this.kompresjaGzip = kompresjaGzip;
+    }
+
+    @Override
+    public void run() {
+        if (nazwaPliku.endsWith(".zip") || nazwaPliku.endsWith(".gz")) {
+            nazwaPliku = nazwaPliku.replaceAll("(?<!^)[.][^.]*$", "");
+        }
+        String rozszerzenie = kompresjaGzip ? ".gz" : ".zip";
+        nazwaPliku = String.format("%s_%s%s", nazwaPliku, pracownik.getPesel(), rozszerzenie);
+
+        if (kompresjaGzip) {
+            zrobGzipa();
+        } else {
+            zrobZipa();
+        }
+
+    }
+
+    private void zrobGzipa() {
+        try (ObjectOutputStream out = new ObjectOutputStream(new GZIPOutputStream(new BufferedOutputStream(new FileOutputStream(nazwaPliku))))) {
+            out.writeObject(pracownik);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
+    private void zrobZipa() {
+        try (FileOutputStream fos = new FileOutputStream(nazwaPliku);
+             BufferedOutputStream bos = new BufferedOutputStream(fos);
+             ZipOutputStream zos = new ZipOutputStream(bos)) {
+            zos.putNextEntry(new ZipEntry(pracownik.getPesel()));
+            try (ObjectOutputStream out = new ObjectOutputStream(zos)) {
+                out.writeObject(pracownik);
+            }
+
+        } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
