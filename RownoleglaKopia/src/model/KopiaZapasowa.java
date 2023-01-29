@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Supplier;
 import java.util.zip.*;
 
 public class KopiaZapasowa {
@@ -40,61 +41,46 @@ public class KopiaZapasowa {
     }
 
     public HashMap<String, Pracownik> odwtorzBazePracownikow(String nazwaPliku, boolean kompresjaGzip) {
-        HashMap<String, Pracownik> nowaMapa;
-        try (FileInputStream fis = new FileInputStream(nazwaPliku)) {
-            Object obj;
-            if (kompresjaGzip) {
-                obj = odtworzBazePracownikowGzip(fis);
-            } else {
-                obj = odtworzBazePracownikowZip(fis);
-            }
+        HashMap<String, Pracownik> nowaMapa = new HashMap<>();
 
-            if (!(obj instanceof HashMap<?, ?> mapa)) {
-                throw new RuntimeException("Kopia nie jest mapa.");
-            }
+        String nazwaPlikuBezRozszerzenia = nazwaPliku.replaceAll("(?<!^)[.][^.]*$", "");
+        var executorService = Executors.newFixedThreadPool(10);
+        ArrayList<CompletableFuture<Pracownik>> results = new ArrayList<>();
 
-            if (mapa.size() < 1) {
-                throw new RuntimeException("Kopia jest pusta.");
+        File folder = new File(".");
+        FileFilter filtr = new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                return pathname.getName().startsWith(nazwaPlikuBezRozszerzenia);
             }
-
-            for (Object o : mapa.values()) {
-                if (!(o instanceof Pracownik)) {
-                    throw new RuntimeException("Zly plik lub kopia jest uszkodzona.");
-                }
+        };
+        File[] pliki = folder.listFiles(filtr);
+        if (pliki != null) {
+            for (File plik :
+                    pliki) {
+                results.add(CompletableFuture.supplyAsync(new OdczytPracownika(plik, kompresjaGzip), executorService));
             }
-            nowaMapa = (HashMap<String, Pracownik>) mapa;
-        } catch (IOException e) {
-            throw new RuntimeException(e);
         }
+
+        for (var result :
+                results) {
+            Pracownik pracownik = null;
+            try {
+                pracownik = result.get();
+            } catch (InterruptedException e) {
+                System.err.println("Watek zostal przerwany");
+            } catch (ExecutionException e) {
+                System.err.println("Cos poszlo nie tak" + e.getCause());
+            }
+
+            if (pracownik != null) {
+                nowaMapa.put(pracownik.getPesel(), pracownik);
+            }
+        }
+
+        executorService.shutdown();
 
         return nowaMapa;
-    }
-
-    private Object odtworzBazePracownikowGzip(FileInputStream fis) {
-        try (GZIPInputStream gis = new GZIPInputStream(fis);
-             ObjectInputStream ois = new ObjectInputStream(gis)) {
-
-            return ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Object odtworzBazePracownikowZip(FileInputStream fis) {
-        try {
-            ZipInputStream zis = new ZipInputStream(fis);
-            zis.getNextEntry();
-            ObjectInputStream ois = new ObjectInputStream(zis);
-
-            Object obj = ois.readObject();
-
-            ois.close();
-            zis.close();
-
-            return obj;
-        } catch (IOException | ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
     }
 }
 
@@ -144,6 +130,58 @@ class ZapisPracownika implements Runnable {
             }
 
         } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+}
+
+class OdczytPracownika implements Supplier<Pracownik> {
+    File nazwaPliku;
+    boolean kompresjaGzip;
+
+    public OdczytPracownika(File nazwaPliku, boolean kompresjaGzip) {
+        this.nazwaPliku = nazwaPliku;
+        this.kompresjaGzip = kompresjaGzip;
+    }
+
+    @Override
+    public Pracownik get() {
+        Object obj;
+        if (kompresjaGzip) {
+            obj = odczytajGzipa();
+        } else {
+            obj = odczytajZipa();
+        }
+
+        if (!(obj instanceof Pracownik)) {
+            throw new RuntimeException("Zly plik lub kopia jest uszkodzona.");
+        }
+
+        return (Pracownik) obj;
+    }
+
+    private Object odczytajGzipa() {
+        try (FileInputStream fis = new FileInputStream(nazwaPliku);
+             GZIPInputStream gis = new GZIPInputStream(fis);
+             ObjectInputStream ois = new ObjectInputStream(gis)) {
+
+            return ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Object odczytajZipa() {
+        try (FileInputStream fis = new FileInputStream(nazwaPliku);
+             ZipInputStream zis = new ZipInputStream(fis)) {
+            zis.getNextEntry();
+            Object obj;
+            try (ObjectInputStream ois = new ObjectInputStream(zis)) {
+                obj = ois.readObject();
+            }
+
+            return obj;
+        } catch (IOException | ClassNotFoundException e) {
             throw new RuntimeException(e);
         }
     }
