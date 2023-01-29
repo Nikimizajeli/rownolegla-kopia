@@ -5,7 +5,7 @@ import view.Menu;
 import view.TrybMenu;
 
 import java.math.BigDecimal;
-import java.util.Scanner;
+import java.util.*;
 
 public class EwidencjaPracownikowController {
     private final Scanner scanner = new Scanner(System.in);
@@ -85,7 +85,7 @@ public class EwidencjaPracownikowController {
     private void przetworzDodawaniePracownika() {
         menu.wyswietlMenu(trybMenu);
         System.out.printf("%-30s ", Lokalizacja.DODAJ_PRACOWNIKA_WYBOR);
-        Pracownik pracownik = pobierzDanePracownika();
+        Pracownik pracownik = pobierzDanePracownikaTest();                          // tutaj Test
         menu.wyswietlStopke(trybMenu, "Enter", "Q");
         String input = scanner.nextLine();
         while (!input.equalsIgnoreCase("Q")) {
@@ -163,6 +163,26 @@ public class EwidencjaPracownikowController {
 
         menu.wyswietlLinie();
         return pracownik;
+    }
+
+    private Vector<String> pesele = new Vector<>(Arrays.asList("54491456446", "49240471375", "07921019696", "08222738480", "83090542865", "96282301410",
+            "03111369736", "65911428589", "22250939226", "09231912108", "93092308749", "55880838999", "06421864188", "21812881283"));
+    private List<String> imiona = Arrays.asList("Kamil", "Bogdan", "Andrzej", "Zdzisław", "Ryszard");
+    private List<String> nazwiska = Arrays.asList("Rybak", "Kowal", "Stal", "Dworski", "Chleb");
+
+    private Pracownik pobierzDanePracownikaTest(){
+        Random rand = new Random();
+
+        System.out.println();
+        return new Dyrektor(pesele.remove(rand.nextInt(0, pesele.size())),
+                imiona.get(rand.nextInt(0, imiona.size())),
+                nazwiska.get(rand.nextInt(0, nazwiska.size())),
+                BigDecimal.valueOf(rand.nextInt(100000)),
+                Integer.toString(rand.nextInt(500000000,1000000000)),
+                BigDecimal.valueOf(rand.nextInt(10000)),
+                Integer.toString(rand.nextInt(10000)),
+                BigDecimal.valueOf(rand.nextInt(1000, 1000000))
+                );
     }
 
     private void przetworzUsuwaniePracownika() {
