@@ -142,8 +142,9 @@ class BazaPracownikowTest {
         assertFalse(baza.czyPeselJestPoprawny(pesel));
     }
 
+    // 1.9) poprawna równoległa serializacja pracowników do skompresowanych plików archiwów
     @org.junit.jupiter.api.Test
-    void utworzKopiePracownikow_Gzip() {
+    void utworzKopiePracownikow_GzipPoprawnie() {
         String nazwaPliku = "testZapisu";
         Pracownik[] pracownicy = {generujDyrektora(), generujHandlowca(), generujHandlowca(), generujDyrektora()};
         for (Pracownik pracownik :
@@ -169,8 +170,9 @@ class BazaPracownikowTest {
         assertTrue(plikiUtworzonePoprawnie);
     }
 
+    // 1.10) poprawna równoległa deserializacja pracowników ze skompresowanych plików archiwów
     @org.junit.jupiter.api.Test
-    void odtworzBazeZKopii_Gzip() {
+    void odtworzBazeZKopii_GzipPoprawnie() {
         String nazwaPliku = "testPrzywracania";
         Pracownik[] pracownicy = {generujHandlowca(), generujDyrektora(), generujHandlowca(), generujDyrektora()};
         for (Pracownik pracownik :
@@ -191,6 +193,13 @@ class BazaPracownikowTest {
         }
 
         assertEquals(baza.getPracownicy(), nowaBaza.getPracownicy());
+    }
+
+    // 1.11) niepoprawna równoległa deserializacja pracowników ze skompresowanych plików archiwów
+    @org.junit.jupiter.api.Test
+    void odtworzBazeZKopii_GzipBrakPliku() {
+        baza.odtworzBazeZKopii("234572472457684578457vfvtgvyhctcccjytgvujveuyrvku42645745", true);
+        assertTrue(baza.getPracownicy().isEmpty());
     }
 
     private Handlowiec generujHandlowca() {
