@@ -1,20 +1,27 @@
 package model;
 
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
+
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.Vector;
+import java.util.stream.Stream;
 
 import static org.junit.jupiter.api.Assertions.*;
 
 class BazaPracownikowTest {
+    final static String[] POPRAWNE_PESELE = {"54491456446", "49240471375", "07921019696", "08222738480", "83090542865", "96282301410",
+            "03111369736", "65911428589", "22250939226", "09231912108", "93092308749", "55880838999", "06421864188", "21812881283"};
 
+    final static String[] NIEPOPRAWNE_PESELE = {"11111111111", "33333333333", "55555555555", "77777777777", "99999999999", "1234",
+            "0987654", "tonawetnieliczba", "1234567890987654321", "151515151515", "09138805423", "22222209876"};
     private BazaPracownikow baza;
     private Random rand;
 
     private Vector<String> poprawnePesele;
-    private Vector<String> niepoprawnePesele;
     private List<String> imiona;
     private List<String> nazwiska;
 
@@ -22,10 +29,7 @@ class BazaPracownikowTest {
     void init() {
         baza = new BazaPracownikow();
         rand = new Random();
-        poprawnePesele = new Vector<>(Arrays.asList("54491456446", "49240471375", "07921019696", "08222738480", "83090542865", "96282301410",
-                "03111369736", "65911428589", "22250939226", "09231912108", "93092308749", "55880838999", "06421864188", "21812881283"));
-        niepoprawnePesele = new Vector<>(Arrays.asList("11111111111", "33333333333", "55555555555", "77777777777", "99999999999", "1234",
-                "0987654", "tonawetnieliczba", "1234567890987654321", "151515151515", "09138805423", "22222209876"));
+        poprawnePesele = new Vector<>(Arrays.asList(POPRAWNE_PESELE));
 
         imiona = Arrays.asList("Kamil", "Bogdan", "Andrzej", "Zdzisław", "Ryszard", "Leszek", "Baltazar");
         nazwiska = Arrays.asList("Rybak", "Kowal", "Stal", "Dworski", "Chleb", "Chmiel", "Winny", "Albo", "Tron");
@@ -114,6 +118,26 @@ class BazaPracownikowTest {
         assertThrows(IllegalArgumentException.class, () -> {
             baza.pobierzPracownika(dyrektor.getPesel());
         });
+    }
+
+    // 1.8) testy sparametryzowane (parameterized test) dla weryfikacji poprawności sumy kontrolnej numeru PESEL
+    static Stream<String> dostawcaPoprawnychPESELi(){
+        return Stream.of(POPRAWNE_PESELE);
+    }
+    @ParameterizedTest
+    @MethodSource("dostawcaPoprawnychPESELi")
+    void czyPeselJestPoprawny_Tak(String pesel){
+        assertTrue(baza.czyPeselJestPoprawny(pesel));
+    }
+
+    static Stream<String> dostawcaNiepoprawnychPESELi(){
+        return Stream.of(NIEPOPRAWNE_PESELE);
+    }
+
+    @ParameterizedTest
+    @MethodSource("dostawcaNiepoprawnychPESELi")
+    void czyPeselJestPoprawny_Nie(String pesel){
+        assertFalse(baza.czyPeselJestPoprawny(pesel));
     }
 
     @org.junit.jupiter.api.Test

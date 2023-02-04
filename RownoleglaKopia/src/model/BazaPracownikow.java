@@ -32,7 +32,7 @@ public class BazaPracownikow {
         pracownicy.remove(pesel);
     }
 
-    private boolean czyPeselJestPoprawny(String pesel) {
+    boolean czyPeselJestPoprawny(String pesel) {
         if (pracownicy.containsKey(pesel)) {
             return false;
         }
