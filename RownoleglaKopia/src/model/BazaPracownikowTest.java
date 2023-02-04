@@ -86,10 +86,34 @@ class BazaPracownikowTest {
         assertEquals(12, baza.getPracownicy().size());
     }
 
-
+    // 1.6) usunięcie pracownika typu Handlowiec z kontenera zawierającego innych pracowników
     @org.junit.jupiter.api.Test
-    void usunPracownika() {
-        fail("Ten test jest jeszcze pusty.");
+    void usunPracownika_Handlowiec() {
+        baza.dodajPracownika(generujHandlowca());
+        baza.dodajPracownika(generujDyrektora());
+
+        Handlowiec handlowiec = generujHandlowca();
+        baza.dodajPracownika(handlowiec);
+        baza.usunPracownika(handlowiec.getPesel());
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            baza.pobierzPracownika(handlowiec.getPesel());
+        });
+    }
+
+    // 1.7) usunięcie pracownika typu Dyrektor z kontenera zawierającego innych pracowników
+    @org.junit.jupiter.api.Test
+    void usunPracownika_Dyrektor() {
+        baza.dodajPracownika(generujHandlowca());
+        baza.dodajPracownika(generujDyrektora());
+
+        Dyrektor dyrektor = generujDyrektora();
+        baza.dodajPracownika(dyrektor);
+        baza.usunPracownika(dyrektor.getPesel());
+
+        assertThrows(IllegalArgumentException.class, () -> {
+            baza.pobierzPracownika(dyrektor.getPesel());
+        });
     }
 
     @org.junit.jupiter.api.Test
