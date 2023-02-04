@@ -146,34 +146,51 @@ class BazaPracownikowTest {
     void utworzKopiePracownikow_Gzip() {
         String nazwaPliku = "testZapisu";
         Pracownik[] pracownicy = {generujDyrektora(), generujHandlowca(), generujHandlowca(), generujDyrektora()};
-        for (Pracownik pracownik:
-             pracownicy) {
+        for (Pracownik pracownik :
+                pracownicy) {
             baza.dodajPracownika(pracownik);
         }
         baza.utworzKopiePracownikow(nazwaPliku, true);
 
         File[] pliki = new File[4];
-        for(int i = 0; i < 4; i++){
+        for (int i = 0; i < 4; i++) {
             pliki[i] = new File(nazwaPliku + '_' + pracownicy[i].getPesel() + ".gz");
         }
 
         boolean plikiUtworzonePoprawnie = true;
-        for (File plik:
-             pliki) {
+        for (File plik :
+                pliki) {
             plikiUtworzonePoprawnie &= plik.exists();
+            if (!plik.delete()) {
+                System.out.println("Nie udalo sie usunac plikow utworzonych w ramach testu.");
+            }
         }
 
         assertTrue(plikiUtworzonePoprawnie);
     }
 
     @org.junit.jupiter.api.Test
-    void odtworzBazeZKopii() {
-        fail("Ten test jest jeszcze pusty.");
-    }
+    void odtworzBazeZKopii_Gzip() {
+        String nazwaPliku = "testPrzywracania";
+        Pracownik[] pracownicy = {generujHandlowca(), generujDyrektora(), generujHandlowca(), generujDyrektora()};
+        for (Pracownik pracownik :
+                pracownicy) {
+            baza.dodajPracownika(pracownik);
+        }
+        baza.utworzKopiePracownikow(nazwaPliku, true);
 
-    @org.junit.jupiter.api.Test
-    void getPracownicy() {
-        fail("Ten test jest jeszcze pusty.");
+        var nowaBaza = new BazaPracownikow();
+
+        nowaBaza.odtworzBazeZKopii(nazwaPliku, true);
+
+        for (int i = 0; i < 4; i++) {
+            File plik = new File(nazwaPliku + '_' + pracownicy[i].getPesel() + ".gz");
+            if (!plik.delete()) {
+                System.out.println("Nie udalo sie usunac plikow utworzonych w ramach testu.");
+            }
+        }
+
+        assertEquals(baza.getPracownicy(), nowaBaza.getPracownicy());
     }
 
     private Handlowiec generujHandlowca() {
