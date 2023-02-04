@@ -1,0 +1,132 @@
+package model;
+
+import java.math.BigDecimal;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Random;
+import java.util.Vector;
+
+import static org.junit.jupiter.api.Assertions.*;
+
+class BazaPracownikowTest {
+
+    private BazaPracownikow baza;
+    private Random rand;
+
+    private Vector<String> poprawnePesele;
+    private Vector<String> niepoprawnePesele;
+    private List<String> imiona;
+    private List<String> nazwiska;
+
+    @org.junit.jupiter.api.BeforeEach
+    void init() {
+        baza = new BazaPracownikow();
+        rand = new Random();
+        poprawnePesele = new Vector<>(Arrays.asList("54491456446", "49240471375", "07921019696", "08222738480", "83090542865", "96282301410",
+                "03111369736", "65911428589", "22250939226", "09231912108", "93092308749", "55880838999", "06421864188", "21812881283"));
+        niepoprawnePesele = new Vector<>(Arrays.asList("11111111111", "33333333333", "55555555555", "77777777777", "99999999999", "1234",
+                "0987654", "tonawetnieliczba", "1234567890987654321", "151515151515", "09138805423", "22222209876"));
+
+        imiona = Arrays.asList("Kamil", "Bogdan", "Andrzej", "Zdzisław", "Ryszard", "Leszek", "Baltazar");
+        nazwiska = Arrays.asList("Rybak", "Kowal", "Stal", "Dworski", "Chleb", "Chmiel", "Winny", "Albo", "Tron");
+    }
+
+    // 1.1) dodanie pracownika typu Handlowiec do pustego kontenera
+    @org.junit.jupiter.api.Test
+    void dodajPracownika_HandlowiecPustaBaza() {
+        Handlowiec handlowiec = generujHandlowca();
+
+        baza.dodajPracownika(handlowiec);
+        assertEquals(handlowiec, baza.pobierzPracownika(handlowiec.getPesel()));
+    }
+
+    // 1.2) dodanie pracownika typu Dyrektor do pustego kontenera
+    @org.junit.jupiter.api.Test
+    void dodajPracownika_DyrektorPustaBaza() {
+        Dyrektor dyrektor = generujDyrektora();
+
+        baza.dodajPracownika(dyrektor);
+        assertEquals(dyrektor, baza.pobierzPracownika(dyrektor.getPesel()));
+    }
+
+    // 1.3) dodanie pracownika typu Handlowiec do kontenera zawierającego innych pracowników
+    @org.junit.jupiter.api.Test
+    void dodajPracownika_Handlowiec(){
+        Dyrektor dyrektor = generujDyrektora();
+        baza.dodajPracownika(dyrektor);
+        Handlowiec handlowiec = generujHandlowca();
+        baza.dodajPracownika(handlowiec);
+
+        Handlowiec nowyHandlowiec = generujHandlowca();
+        baza.dodajPracownika(nowyHandlowiec);
+        assertEquals(nowyHandlowiec, baza.pobierzPracownika(nowyHandlowiec.getPesel()));
+    }
+
+    // 1.4) dodanie pracownika typu Dyrektor do kontenera zawierającego innych pracowników
+    @org.junit.jupiter.api.Test
+    void dodajPracownika_Dyrektor(){
+        Dyrektor dyrektor = generujDyrektora();
+        baza.dodajPracownika(dyrektor);
+        Handlowiec handlowiec = generujHandlowca();
+        baza.dodajPracownika(handlowiec);
+
+        Dyrektor nowyDyrektor = generujDyrektora();
+        baza.dodajPracownika(nowyDyrektor);
+        assertEquals(nowyDyrektor, baza.pobierzPracownika(nowyDyrektor.getPesel()));
+    }
+
+    // 1.5) dodanie do pustego kontenera minimum 10 pracowników losowych typów
+    @org.junit.jupiter.api.Test
+    void dodajPracownika_DziesieciuLosowych(){
+        for (int i = 0; i < 12; i++){
+            Pracownik pracownik = (rand.nextInt(0,2) & 1) == 1 ? generujDyrektora() : generujHandlowca();
+            baza.dodajPracownika(pracownik);
+        }
+
+        assertEquals(12, baza.getPracownicy().size());
+    }
+
+
+    @org.junit.jupiter.api.Test
+    void usunPracownika() {
+        fail("Ten test jest jeszcze pusty.");
+    }
+
+    @org.junit.jupiter.api.Test
+    void utworzKopiePracownikow() {
+        fail("Ten test jest jeszcze pusty.");
+    }
+
+    @org.junit.jupiter.api.Test
+    void odtworzBazeZKopii() {
+        fail("Ten test jest jeszcze pusty.");
+    }
+
+    @org.junit.jupiter.api.Test
+    void getPracownicy() {
+        fail("Ten test jest jeszcze pusty.");
+    }
+
+    private Handlowiec generujHandlowca(){
+        return new Handlowiec(poprawnePesele.remove(rand.nextInt(0, poprawnePesele.size())),
+                imiona.get(rand.nextInt(0, imiona.size())),
+                nazwiska.get(rand.nextInt(0, nazwiska.size())),
+                BigDecimal.valueOf(rand.nextInt(100000)),
+                Integer.toString(rand.nextInt(500000000,1000000000)),
+                rand.nextInt(20),
+                BigDecimal.valueOf(rand.nextInt(100000))
+        );
+    }
+
+    private Dyrektor generujDyrektora(){
+        return new Dyrektor(poprawnePesele.remove(rand.nextInt(0, poprawnePesele.size())),
+                imiona.get(rand.nextInt(0, imiona.size())),
+                nazwiska.get(rand.nextInt(0, nazwiska.size())),
+                BigDecimal.valueOf(rand.nextInt(100000)),
+                Integer.toString(rand.nextInt(500000000,1000000000)),
+                BigDecimal.valueOf(rand.nextInt(10000)),
+                Integer.toString(rand.nextInt(10000)),
+                BigDecimal.valueOf(rand.nextInt(1000, 1000000))
+        );
+    }
+}

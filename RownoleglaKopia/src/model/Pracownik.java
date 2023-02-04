@@ -2,6 +2,7 @@ package model;
 
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class Pracownik implements Serializable {
     private String pesel;
@@ -84,5 +85,18 @@ public class Pracownik implements Serializable {
                 Lokalizacja.WYNAGRODZENIE, getWynagrodzenie(),
                 Lokalizacja.NUMER_TEL, getNumerTelefonu()
         );
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        Pracownik pracownik = (Pracownik) o;
+        return Objects.equals(pesel, pracownik.pesel) && Objects.equals(imie, pracownik.imie) && Objects.equals(nazwisko, pracownik.nazwisko) && Objects.equals(stanowisko, pracownik.stanowisko) && Objects.equals(wynagrodzenie, pracownik.wynagrodzenie) && Objects.equals(numerTelefonu, pracownik.numerTelefonu);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(pesel, imie, nazwisko, stanowisko, wynagrodzenie, numerTelefonu);
     }
 }

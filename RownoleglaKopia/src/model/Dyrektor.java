@@ -1,6 +1,7 @@
 package model;
 
 import java.math.BigDecimal;
+import java.util.Objects;
 
 public class Dyrektor extends Pracownik {
     private BigDecimal dodatekSluzbowy;
@@ -50,5 +51,19 @@ public class Dyrektor extends Pracownik {
                 Lokalizacja.NUMER_KARTY, getNumerKarty(),
                 Lokalizacja.LIMIT_KOSZTOW, getLimitKosztow().toString()
         );
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        if (!super.equals(o)) return false;
+        Dyrektor dyrektor = (Dyrektor) o;
+        return Objects.equals(dodatekSluzbowy, dyrektor.dodatekSluzbowy) && Objects.equals(numerKarty, dyrektor.numerKarty) && Objects.equals(limitKosztow, dyrektor.limitKosztow);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(super.hashCode(), dodatekSluzbowy, numerKarty, limitKosztow);
     }
 }
