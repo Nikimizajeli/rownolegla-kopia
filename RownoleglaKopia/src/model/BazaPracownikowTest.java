@@ -3,6 +3,7 @@ package model;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import java.io.File;
 import java.math.BigDecimal;
 import java.util.Arrays;
 import java.util.List;
@@ -55,7 +56,7 @@ class BazaPracownikowTest {
 
     // 1.3) dodanie pracownika typu Handlowiec do kontenera zawierającego innych pracowników
     @org.junit.jupiter.api.Test
-    void dodajPracownika_Handlowiec(){
+    void dodajPracownika_Handlowiec() {
         Dyrektor dyrektor = generujDyrektora();
         baza.dodajPracownika(dyrektor);
         Handlowiec handlowiec = generujHandlowca();
@@ -68,7 +69,7 @@ class BazaPracownikowTest {
 
     // 1.4) dodanie pracownika typu Dyrektor do kontenera zawierającego innych pracowników
     @org.junit.jupiter.api.Test
-    void dodajPracownika_Dyrektor(){
+    void dodajPracownika_Dyrektor() {
         Dyrektor dyrektor = generujDyrektora();
         baza.dodajPracownika(dyrektor);
         Handlowiec handlowiec = generujHandlowca();
@@ -81,9 +82,9 @@ class BazaPracownikowTest {
 
     // 1.5) dodanie do pustego kontenera minimum 10 pracowników losowych typów
     @org.junit.jupiter.api.Test
-    void dodajPracownika_DziesieciuLosowych(){
-        for (int i = 0; i < 12; i++){
-            Pracownik pracownik = (rand.nextInt(0,2) & 1) == 1 ? generujDyrektora() : generujHandlowca();
+    void dodajPracownika_DziesieciuLosowych() {
+        for (int i = 0; i < 12; i++) {
+            Pracownik pracownik = (rand.nextInt(0, 2) & 1) == 1 ? generujDyrektora() : generujHandlowca();
             baza.dodajPracownika(pracownik);
         }
 
@@ -121,28 +122,48 @@ class BazaPracownikowTest {
     }
 
     // 1.8) testy sparametryzowane (parameterized test) dla weryfikacji poprawności sumy kontrolnej numeru PESEL
-    static Stream<String> dostawcaPoprawnychPESELi(){
+    static Stream<String> dostawcaPoprawnychPESELi() {
         return Stream.of(POPRAWNE_PESELE);
     }
+
     @ParameterizedTest
     @MethodSource("dostawcaPoprawnychPESELi")
-    void czyPeselJestPoprawny_Tak(String pesel){
+    void czyPeselJestPoprawny_Tak(String pesel) {
         assertTrue(baza.czyPeselJestPoprawny(pesel));
     }
 
-    static Stream<String> dostawcaNiepoprawnychPESELi(){
+    static Stream<String> dostawcaNiepoprawnychPESELi() {
         return Stream.of(NIEPOPRAWNE_PESELE);
     }
 
     @ParameterizedTest
     @MethodSource("dostawcaNiepoprawnychPESELi")
-    void czyPeselJestPoprawny_Nie(String pesel){
+    void czyPeselJestPoprawny_Nie(String pesel) {
         assertFalse(baza.czyPeselJestPoprawny(pesel));
     }
 
     @org.junit.jupiter.api.Test
-    void utworzKopiePracownikow() {
-        fail("Ten test jest jeszcze pusty.");
+    void utworzKopiePracownikow_Gzip() {
+        String nazwaPliku = "testZapisu";
+        Pracownik[] pracownicy = {generujDyrektora(), generujHandlowca(), generujHandlowca(), generujDyrektora()};
+        for (Pracownik pracownik:
+             pracownicy) {
+            baza.dodajPracownika(pracownik);
+        }
+        baza.utworzKopiePracownikow(nazwaPliku, true);
+
+        File[] pliki = new File[4];
+        for(int i = 0; i < 4; i++){
+            pliki[i] = new File(nazwaPliku + '_' + pracownicy[i].getPesel() + ".gz");
+        }
+
+        boolean plikiUtworzonePoprawnie = true;
+        for (File plik:
+             pliki) {
+            plikiUtworzonePoprawnie &= plik.exists();
+        }
+
+        assertTrue(plikiUtworzonePoprawnie);
     }
 
     @org.junit.jupiter.api.Test
@@ -155,23 +176,23 @@ class BazaPracownikowTest {
         fail("Ten test jest jeszcze pusty.");
     }
 
-    private Handlowiec generujHandlowca(){
+    private Handlowiec generujHandlowca() {
         return new Handlowiec(poprawnePesele.remove(rand.nextInt(0, poprawnePesele.size())),
                 imiona.get(rand.nextInt(0, imiona.size())),
                 nazwiska.get(rand.nextInt(0, nazwiska.size())),
                 BigDecimal.valueOf(rand.nextInt(100000)),
-                Integer.toString(rand.nextInt(500000000,1000000000)),
+                Integer.toString(rand.nextInt(500000000, 1000000000)),
                 rand.nextInt(20),
                 BigDecimal.valueOf(rand.nextInt(100000))
         );
     }
 
-    private Dyrektor generujDyrektora(){
+    private Dyrektor generujDyrektora() {
         return new Dyrektor(poprawnePesele.remove(rand.nextInt(0, poprawnePesele.size())),
                 imiona.get(rand.nextInt(0, imiona.size())),
                 nazwiska.get(rand.nextInt(0, nazwiska.size())),
                 BigDecimal.valueOf(rand.nextInt(100000)),
-                Integer.toString(rand.nextInt(500000000,1000000000)),
+                Integer.toString(rand.nextInt(500000000, 1000000000)),
                 BigDecimal.valueOf(rand.nextInt(10000)),
                 Integer.toString(rand.nextInt(10000)),
                 BigDecimal.valueOf(rand.nextInt(1000, 1000000))
